@@ -15,21 +15,25 @@ public class StudentServiceImpl implements StudentService {
 	public boolean insertData(Student obj) {
 		// Parameterized query
 		String insertSql ="insert into student(sid,sname,sage,scollege) values(?,?,?,?)";
-		//A connection (session) with a specific database. SQL statements are executed and results are returned within the context of a connection. 
+		String updateSql = "update student set scollege=? where sid=?";
+		//A connection (session) with a specific database. 
+		//SQL statements are executed and results are returned within the context of a connection. 
 		Connection dbConnection = DbUtil.getDbConnection();
 		//An object that represents a precompiled SQL statement. 
 		PreparedStatement preparedStatement = null;
 		if(null!= dbConnection) {
 			try {
 				//3. Create Statement 
-				preparedStatement =dbConnection.prepareStatement(insertSql);				
-				preparedStatement.setInt(1, obj.getId());
-				preparedStatement.setString(2, obj.getName());
-				preparedStatement.setInt(3, obj.getAge());
-				preparedStatement.setString(4, obj.getCollege());				
-				//4. execute query
+				preparedStatement =dbConnection.prepareStatement(updateSql);				
+				preparedStatement.setString(1,obj.getCollege());
+				preparedStatement.setInt(2, obj.getId());
+//				preparedStatement.setInt(3, obj.getAge());
+//				preparedStatement.setString(4, obj.getCollege());				
+				//4. execute query or statement
 				// insert / delete/update
+				
 				int noOfRowsReturned = preparedStatement.executeUpdate();
+				System.out.println("-->" + noOfRowsReturned);
 				if(noOfRowsReturned>0) {
 					return true;
 				}				
@@ -53,13 +57,15 @@ public class StudentServiceImpl implements StudentService {
 	public List<Student> getAllStudentDetails() throws SQLException {
 		
 		List<Student> studentList = new ArrayList<>();
-		String selectQuery = "select * from student";		
+		String selectQuery = "select * from student where sid";		
 		Connection dbConnection = DbUtil.getDbConnection();
 		PreparedStatement preparedStatement = null;
 		if(null != dbConnection) {			
 			try {
 				preparedStatement = dbConnection.prepareStatement(selectQuery);
 				//Moves the cursor forward one row from its current position
+				// 5 . Get the result
+				// select - executeQuery
 				ResultSet resultSet = preparedStatement.executeQuery();
 				while (resultSet.next())  {
 					Student student = new Student();
@@ -80,5 +86,41 @@ public class StudentServiceImpl implements StudentService {
 		}
 		return studentList;
 	}
+	
+	
+	@Override
+	public Student getStudentDetailsById(int studentId) throws SQLException {
+		
+		String selectQuery = "select * from student where sid = ?";		
+		Connection dbConnection = DbUtil.getDbConnection();
+		PreparedStatement preparedStatement = null;
+		if(null != dbConnection) {			
+			try {
+				preparedStatement = dbConnection.prepareStatement(selectQuery);
+				preparedStatement.setInt(1, studentId);
+				//Moves the cursor forward one row from its current position
+				// 5 . Get the result
+				// select - executeQuery
+				ResultSet resultSet = preparedStatement.executeQuery();
+				while (resultSet.next())  {
+					Student student = new Student();
+					int id = resultSet.getInt("sid");
+					student.setId(id);
+					student.setName(resultSet.getString("sname"));
+					student.setAge(resultSet.getInt("sage"));
+					student.setCollege(resultSet.getString("scollege"));
+					return student;				
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}finally {				
+				preparedStatement.close();
+				dbConnection.close();
+			}
+		}
+		return null;
+	}
+
 
 }
